@@ -12,3 +12,9 @@
 *.swp
 *.swo
 .DS_Store
+
+# Demo and testing Kiln Files
+
+/Kiln/src/demo.kiln
+/Kiln/src/main.kiln
+/Kiln/src/test.kiln
