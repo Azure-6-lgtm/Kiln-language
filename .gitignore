@@ -1,0 +1,14 @@
+#Rust build artifacts
+
+/Kiln/target/
+
+#Environment variables and secrets
+
+.env
+.env.*
+
+#Editor and OS files
+
+*.swp
+*.swo
+.DS_Store

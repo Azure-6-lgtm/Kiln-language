@@ -1,0 +1,9 @@
+// comment
+/* 
+	multi line comment
+*/
+
+fn main() -> bool {
+	var hello = 67;
+	return true;
+}
