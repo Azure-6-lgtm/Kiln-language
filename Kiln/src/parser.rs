@@ -1,3 +1,4 @@
+
 use crate::ast::{BinaryOp, Expr, Function, Item, Parameter, Program, Stmt};
 use crate::token::{Token, TokenKind};
 
@@ -82,7 +83,8 @@ impl Parser {
 
                 if self.current_return_type.as_deref() == Some("void") {
                     return Err(ParseError {
-                        message: "A void function cannot return a value [E002]".to_string(),
+                        message: "A void function cannot return a value [E002]"
+                            .to_string(),
                         line: return_token.line,
                         column: return_token.column,
                     });
@@ -110,7 +112,9 @@ impl Parser {
                 }
 
                 _ => {
-                    return Err(self.error("Expected a main function declaration [E003]"));
+                    return Err(
+                        self.error("Expected a main function declaration [E003]")
+                    );
                 }
             }
         }
@@ -136,8 +140,147 @@ impl Parser {
         })
     }
 
+    // Entry point for expression parsing.
     pub fn parse_expression(&mut self) -> Result<Expr, ParseError> {
-        self.parse_addition()
+        self.parse_comparison()
+    }
+
+    // Lowest precedence: comparisons and equality.
+    fn parse_comparison(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.parse_addition()?;
+
+        loop {
+            let op = match self.peek().kind {
+                TokenKind::EqualEqual => BinaryOp::Equal,
+                TokenKind::BangEqual => BinaryOp::NotEqual,
+                TokenKind::Less => BinaryOp::Less,
+                TokenKind::LessEqual => BinaryOp::LessEqual,
+                TokenKind::Greater => BinaryOp::Greater,
+                TokenKind::GreaterEqual => BinaryOp::GreaterEqual,
+                _ => break,
+            };
+
+            self.advance();
+
+            let right = self.parse_addition()?;
+
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    // Addition and subtraction.
+    fn parse_addition(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.parse_multiplication()?;
+
+        loop {
+            let op = match self.peek().kind {
+                TokenKind::Plus => BinaryOp::Add,
+                TokenKind::Minus => BinaryOp::Subtract,
+                _ => break,
+            };
+
+            self.advance();
+
+            let right = self.parse_multiplication()?;
+
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    // Multiplication and division.
+    fn parse_multiplication(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.parse_primary()?;
+
+        loop {
+            let op = match self.peek().kind {
+                TokenKind::Star => BinaryOp::Multiply,
+                TokenKind::Slash => BinaryOp::Divide,
+                _ => break,
+            };
+
+            self.advance();
+
+            let right = self.parse_primary()?;
+
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                op,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    // Literals, variables, function calls, and parentheses.
+    fn parse_primary(&mut self) -> Result<Expr, ParseError> {
+        let token = self.advance();
+
+        match token.kind {
+            TokenKind::Number(number) => Ok(Expr::Number(number)),
+
+            TokenKind::StringSlice(value) => Ok(Expr::String(value)),
+
+            TokenKind::True => Ok(Expr::Boolean(true)),
+
+            TokenKind::False => Ok(Expr::Boolean(false)),
+
+            TokenKind::Identifier(name) => {
+                if self.peek().kind == TokenKind::LeftParen {
+                    self.advance();
+
+                    let mut args = Vec::new();
+
+                    if self.peek().kind != TokenKind::RightParen {
+                        loop {
+                            args.push(self.parse_expression()?);
+
+                            if self.peek().kind != TokenKind::Comma {
+                                break;
+                            }
+
+                            self.advance();
+                        }
+                    }
+
+                    self.expect(TokenKind::RightParen)?;
+
+                    Ok(Expr::Call {
+                        callee: Box::new(Expr::Variable(name)),
+                        args,
+                    })
+                } else {
+                    Ok(Expr::Variable(name))
+                }
+            }
+
+            TokenKind::LeftParen => {
+                let expr = self.parse_expression()?;
+                self.expect(TokenKind::RightParen)?;
+                Ok(expr)
+            }
+
+            _ => Err(ParseError {
+                message: format!(
+                    "Unexpected token: {:?} [E009]",
+                    token.kind
+                ),
+                line: token.line,
+                column: token.column,
+            }),
+        }
     }
 
     pub fn parse_function(&mut self) -> Result<Function, ParseError> {
@@ -156,7 +299,9 @@ impl Parser {
             loop {
                 let param_name = match self.advance().kind {
                     TokenKind::Identifier(name) => name,
-                    _ => return Err(self.error("Expected parameter name [E006]")),
+                    _ => {
+                        return Err(self.error("Expected parameter name [E006]"));
+                    }
                 };
 
                 self.expect(TokenKind::Colon)?;
@@ -223,7 +368,9 @@ impl Parser {
     fn parse_function_body(&mut self) -> Result<Vec<Stmt>, ParseError> {
         let mut body = Vec::new();
 
-        while self.peek().kind != TokenKind::RightBrace && self.peek().kind != TokenKind::EOF {
+        while self.peek().kind != TokenKind::RightBrace
+            && self.peek().kind != TokenKind::EOF
+        {
             body.push(self.parse_statement()?);
         }
 
@@ -231,107 +378,5 @@ impl Parser {
 
         Ok(body)
     }
-
-    fn parse_addition(&mut self) -> Result<Expr, ParseError> {
-        let mut expr = self.parse_multiplication()?;
-
-        loop {
-            let op = match self.peek().kind {
-                TokenKind::Plus => BinaryOp::Add,
-                TokenKind::Minus => BinaryOp::Subtract,
-                _ => break,
-            };
-
-            self.advance();
-
-            let right = self.parse_multiplication()?;
-
-            expr = Expr::Binary {
-                left: Box::new(expr),
-                op,
-                right: Box::new(right),
-            };
-        }
-
-        Ok(expr)
-    }
-
-    fn parse_multiplication(&mut self) -> Result<Expr, ParseError> {
-        let mut expr = self.parse_primary()?;
-
-        loop {
-            let op = match self.peek().kind {
-                TokenKind::Star => BinaryOp::Multiply,
-                TokenKind::Slash => BinaryOp::Divide,
-                _ => break,
-            };
-
-            self.advance();
-
-            let right = self.parse_primary()?;
-
-            expr = Expr::Binary {
-                left: Box::new(expr),
-                op,
-                right: Box::new(right),
-            };
-        }
-
-        Ok(expr)
-    }
-
-    fn parse_primary(&mut self) -> Result<Expr, ParseError> {
-        let token = self.advance();
-
-        match token.kind {
-            TokenKind::Number(number) => Ok(Expr::Number(number)),
-
-            TokenKind::StringSlice(value) => Ok(Expr::String(value)),
-
-            TokenKind::True => Ok(Expr::Boolean(true)),
-
-            TokenKind::False => Ok(Expr::Boolean(false)),
-
-            TokenKind::Identifier(name) => {
-                if self.peek().kind == TokenKind::LeftParen {
-                    self.advance();
-
-                    let mut args = Vec::new();
-
-                    if self.peek().kind != TokenKind::RightParen {
-                        loop {
-                            args.push(self.parse_expression()?);
-
-                            if self.peek().kind != TokenKind::Comma {
-                                break;
-                            }
-
-                            self.advance();
-                        }
-                    }
-
-                    self.expect(TokenKind::RightParen)?;
-
-                    Ok(Expr::Call {
-                        callee: Box::new(Expr::Variable(name)),
-                        args,
-                    })
-                } else {
-                    Ok(Expr::Variable(name))
-                }
-            }
-
-            TokenKind::LeftParen => {
-                let expr = self.parse_expression()?;
-                self.expect(TokenKind::RightParen)?;
-                Ok(expr)
-            }
-
-            _ => Err(ParseError {
-                message: format!("Unexpected token: {:?} [E009]", token.kind),
-                line: token.line,
-                column: token.column,
-            }),
-        }
-    }
 }
+
