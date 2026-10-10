@@ -39,6 +39,7 @@ pub enum Expr {
     Number(String),
     String(String),
     Variable(String),
+    Boolean(bool),
 
     Binary {
         left: Box<Expr>,

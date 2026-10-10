@@ -5,7 +5,14 @@ use std::collections::HashMap;
 pub enum Value {
     Number(f64),
     String(String),
+    Boolean(BooleanValue),
     Void,
+}
+
+#[derive(Debug, Clone)]
+pub enum BooleanValue {
+	True,
+	False,
 }
 
 impl std::fmt::Display for Value {
@@ -13,6 +20,12 @@ impl std::fmt::Display for Value {
         match self {
             Value::Number(n) => write!(f, "{n}"),
             Value::String(s) => write!(f, "{s}"),
+            Value::Boolean(boolean) => {
+				match boolean {
+					BooleanValue::True => write!(f, "True"),
+					BooleanValue::False => write!(f, "False"),
+				}
+            }
             Value::Void => write!(f, "void"),
         }
     }
@@ -85,6 +98,15 @@ impl Interpreter {
 			(Some("float"), Value::Number(n)) => {},
 			(Some("string"), Value::String(s)) => {},
 			(Some("void"), Value::Void) => {},
+			(Some("bool"), Value::Boolean(boolean)) => {
+				match boolean {
+					BooleanValue::True => {},
+					BooleanValue::False => {},
+					_ => {
+						return Err(format!("Boolean can only be either True or False"));
+					},
+				};
+			}
 			(None, _) => {},
 			(Some(expected), actual) => {
 				return Err(format!("Function {} declared return type {} but returned type {} [E013])", function.name, expected, match actual {
@@ -92,6 +114,7 @@ impl Interpreter {
 					Value::Number(_) => {"float"},
 					Value::String(_) => {"string"},
 					Value::Void => {"void"},
+					Value::Boolean(_) => {"boolean"},
 				}));
 			}
         }
@@ -148,6 +171,15 @@ impl Interpreter {
                 .cloned()
                 .ok_or_else(|| format!("Undefined variable: {name} [E015]")),
 
+			Expr::Boolean(Value) => {
+				let boolean = match Value {
+					true  => BooleanValue::True,
+					false  => BooleanValue::False,
+				};
+
+				Ok(Value::Boolean(boolean))
+			}
+			
             Expr::Binary { left, op, right } => {
                 let left = self.evaluate(left, environment)?;
                 let right = self.evaluate(right, environment)?;

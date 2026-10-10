@@ -300,6 +300,8 @@ impl Lexer {
                         "string" => TokenKind::StringType,
                         "void" => TokenKind::VoidType,
                         "bool" => TokenKind::BooleanType,
+                        "True" => TokenKind::True,
+                        "False" => TokenKind::False,
                         _ => TokenKind::Identifier(word),
                     }
                 }

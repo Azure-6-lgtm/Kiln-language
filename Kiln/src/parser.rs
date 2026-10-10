@@ -288,6 +288,10 @@ impl Parser {
 
             TokenKind::StringSlice(value) => Ok(Expr::String(value)),
 
+            TokenKind::True => Ok(Expr::Boolean(true)),
+
+            TokenKind::False => Ok(Expr::Boolean(false)),
+
             TokenKind::Identifier(name) => {
                 if self.peek().kind == TokenKind::LeftParen {
                     self.advance();

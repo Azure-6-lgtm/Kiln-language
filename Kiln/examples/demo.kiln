@@ -1,4 +1,4 @@
-import std.io;
+impoet std.io;
 
 struct Point {
     x: f64,
@@ -30,6 +30,6 @@ fn main() -> int {
         total += area(s);
     }
 
-    io.println("Total area: {total}");
+    print("Total area: ", total);
     return 0;
 }

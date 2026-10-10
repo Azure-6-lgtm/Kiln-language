@@ -33,6 +33,10 @@ pub enum TokenKind {
     Slash,
     Percent,
 
+	// Boolean Results
+	True,
+	False,
+	
     // Relational and assignement operators
     Equal,
     PlusEqual,

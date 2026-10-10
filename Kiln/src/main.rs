@@ -32,12 +32,29 @@ use std::process;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    println!("Kiln Interpreter V0.0.1 alpha");
+    println!("Kiln Programming Language V0.0.1 alpha");
+    println!("Made by Azure-6-lgtm");
+    println!("-----------------------------");
 
-    let filename = args
-        .get(1)
-        .map(String::as_str)
-        .unwrap_or("main.kiln");
+	if args.len() < 2 {
+		println!("Usage: Kiln [OPTION] [FILE]");
+		return;
+	}
+
+	match args[1].as_str() {
+		"--ver" => {
+			println!("Kiln Programming Language V0.0.1 alpha");
+			return;
+		},
+		_ => {},
+	};
+
+	let filename = &args[1];
+
+	if !filename.ends_with(".kiln") {
+		eprintln!("Kiln: File is not a valid kiln file, A valid Kiln file must end with .kiln");
+		return;
+	}
 
     let source = match fs::read_to_string(filename) {
         Ok(source) => source,
@@ -54,7 +71,7 @@ fn main() {
         Ok(tokens) => tokens,
         Err(error) => {
             eprintln!(
-                "Kiln lexer error at {}:{}: {}",
+                "Kiln: lexer error at {}:{}: {}",
                 error.line, error.column, error.message
             );
             process::exit(1);
@@ -68,7 +85,7 @@ fn main() {
         Ok(program) => program,
         Err(error) => {
             eprintln!(
-                "Kiln parser error at {}:{}: {}",
+                "Kiln: parser error at {}:{}: {}",
                 error.line, error.column, error.message
             );
             process::exit(1);
@@ -78,7 +95,7 @@ fn main() {
     let mut interpreter = Interpreter::new(&program);
 
     if let Err(error) = interpreter.run() {
-        eprintln!("Kiln runtime error: {}", error);
+        eprintln!("Kiln: runtime error: {}", error);
         process::exit(1);
     }
 }
