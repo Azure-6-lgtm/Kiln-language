@@ -32,7 +32,7 @@ use std::process;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    println!("Kiln Programming Language V0.0.1 alpha pre-release");
+    println!("Kiln Interpreter V0.0.1 alpha");
 
     let filename = args
         .get(1)

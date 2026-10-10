@@ -40,7 +40,6 @@ impl Interpreter {
     }
 
     fn call_function(&mut self, name: &str, args: Vec<Value>) -> Result<Value, String> {
-        // Built-in function.
         if name == "print" {
             for (index, value) in args.iter().enumerate() {
                 if index > 0 {
@@ -56,30 +55,48 @@ impl Interpreter {
             .functions
             .get(name)
             .cloned()
-            .ok_or_else(|| format!("Undefined function: {name}"))?;
+            .ok_or_else(|| format!("Undefined function: {name} [E011]"))?;
 
         if function.params.len() != args.len() {
             return Err(format!(
-                "Function '{name}' expects {} arguments, got {}",
+                "Function '{name}' expects {} arguments, got {} [E012]",
                 function.params.len(),
                 args.len()
             ));
         }
 
-        // Each function call gets its own local environment.
         let mut environment = HashMap::new();
 
         for (parameter, argument) in function.params.iter().zip(args) {
             environment.insert(parameter.name.clone(), argument);
         }
 
+        let mut result = Value::Void;
+
         for statement in &function.body {
-            if let Some(value) = self.execute_statement(statement, &mut environment)? {
-                return Ok(value);
-            }
+			if let Some(value) = self.execute_statement(statement, &mut environment)? {
+				result = value;
+				break;
+			}
         }
 
-        Ok(Value::Void)
+        match (function.return_type.as_deref(), &result) {
+			(Some("int"), Value::Number(n)) if n.fract() == 0.0 =>  {},
+			(Some("float"), Value::Number(n)) => {},
+			(Some("string"), Value::String(s)) => {},
+			(Some("void"), Value::Void) => {},
+			(None, _) => {},
+			(Some(expected), actual) => {
+				return Err(format!("Function {} declared return type {} but returned type {} [E013])", function.name, expected, match actual {
+					Value::Number(n) if n.fract() == 0.0 => {"int"},
+					Value::Number(_) => {"float"},
+					Value::String(_) => {"string"},
+					Value::Void => {"void"},
+				}));
+			}
+        }
+
+        Ok(result)
     }
 
     fn execute_statement(
@@ -119,7 +136,7 @@ impl Interpreter {
             Expr::Number(number) => {
                 let number = number
                     .parse::<f64>()
-                    .map_err(|_| format!("Invalid number: {number}"))?;
+                    .map_err(|_| format!("Invalid number: {number} [E014]"))?;
 
                 Ok(Value::Number(number))
             }
@@ -129,7 +146,7 @@ impl Interpreter {
             Expr::Variable(name) => environment
                 .get(name)
                 .cloned()
-                .ok_or_else(|| format!("Undefined variable: {name}")),
+                .ok_or_else(|| format!("Undefined variable: {name} [E015]")),
 
             Expr::Binary { left, op, right } => {
                 let left = self.evaluate(left, environment)?;
@@ -143,7 +160,7 @@ impl Interpreter {
                             BinaryOp::Multiply => a * b,
                             BinaryOp::Divide => {
                                 if b == 0.0 {
-                                    return Err("Division by zero".to_string());
+                                    return Err("Division by zero [E016]".to_string());
                                 }
 
                                 a / b
@@ -157,7 +174,7 @@ impl Interpreter {
                         Ok(Value::String(a + &b))
                     }
 
-                    _ => Err("Invalid types for binary operation".to_string()),
+                    _ => Err("Invalid types for binary operation [E017]".to_string()),
                 }
             }
 
@@ -165,7 +182,7 @@ impl Interpreter {
                 let name = match callee.as_ref() {
                     Expr::Variable(name) => name.clone(),
                     _ => {
-                        return Err("Only named functions can be called".to_string());
+                        return Err("Only named functions can be called [E018]".to_string());
                     }
                 };
 
