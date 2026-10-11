@@ -2,6 +2,12 @@ use crate::ast::{BinaryOp, Expr, Function, Item, Program, Stmt};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
+pub struct Variable {
+	pub value: Value,
+	pub mutable: bool,
+}
+
+#[derive(Debug, Clone)]
 pub enum Value {
     Number(f64),
     String(String),
@@ -76,10 +82,16 @@ impl Interpreter {
             ));
         }
 
-        let mut environment = HashMap::new();
+        let mut environment: HashMap<String, Variable> = HashMap::new();
 
         for (parameter, argument) in function.params.iter().zip(args) {
-            environment.insert(parameter.name.clone(), argument);
+            environment.insert(
+                parameter.name.clone(),
+                Variable {
+					value: argument,
+					mutable: false,
+                },
+            );
         }
 
         let mut result = Value::Void;
@@ -138,13 +150,25 @@ impl Interpreter {
     fn execute_statement(
         &mut self,
         statement: &Stmt,
-        environment: &mut HashMap<String, Value>,
+        environment: &mut HashMap<String, Variable>,
     ) -> Result<Option<Value>, String> {
         match statement {
-            Stmt::Let { name, value, .. } => {
-                let value = self.evaluate(value, environment)?;
-                environment.insert(name.clone(), value);
-                Ok(None)
+            Stmt::Let {
+				name,
+				mutable,
+				value,
+            } => {
+       			let value = self.evaluate(value, environment)?;
+
+       			environment.insert(
+					name.clone(),
+					Variable {
+						value,
+						mutable: *mutable
+					},
+       			);
+
+       			Ok(None)
             }
 
             Stmt::Return(expression) => {
@@ -159,14 +183,17 @@ impl Interpreter {
             Stmt::Assign{name, value} => {
 				let new_value = self.evaluate(value, environment)?;
 
-				if !environment.contains_key(name) {
-					return Err(format!(
-						"Undefined variable is being reassigned '{}' [E021]",
-						name
-					));
+				let variable = environment.get_mut(name).ok_or_else(|| {
+					format!("Undefined variable : {name} [E021] ")
+				})?;
+
+				if !variable.mutable {
+					return Err(
+						format!("Cannot assign new value to immutable variable: {name} [E020]")
+					)
 				}
 
-				environment.insert(name.clone(), new_value);
+				variable.value = new_value;
 
 				Ok(None)
             }
@@ -209,7 +236,7 @@ impl Interpreter {
     fn evaluate(
         &mut self,
         expression: &Expr,
-        environment: &HashMap<String, Value>,
+        environment: &HashMap<String, Variable>,
     ) -> Result<Value, String> {
         match expression {
             Expr::Number(number) => {
@@ -224,13 +251,14 @@ impl Interpreter {
 
             Expr::Variable(name) => environment
                 .get(name)
-                .cloned()
-                .ok_or_else(|| format!("Undefined variable: {name} [E015]")),
+                .map(|variable| variable.value.clone())
+                .ok_or_else( || format!("Undefined variable: {name} [E015]")),
 
             Expr::Boolean(Value) => {
-                let boolean = match Value {
-                    true => BooleanValue::True,
-                    false => BooleanValue::False,
+                let boolean = if *Value {
+					BooleanValue::True
+                } else {
+					BooleanValue::False
                 };
 
                 Ok(Value::Boolean(boolean))
