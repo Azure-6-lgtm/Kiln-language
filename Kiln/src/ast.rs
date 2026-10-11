@@ -32,6 +32,15 @@ pub enum Stmt {
     },
     Return(Option<Expr>),
     Expr(Expr),
+    If {
+        Condition: Expr,
+        then_branch: Vec<Stmt>,
+        else_branch: Option<Vec<Stmt>>,
+    },
+    Assign {
+		name: String,
+		value: Expr,
+    },
 }
 
 #[derive(Debug, Clone)]

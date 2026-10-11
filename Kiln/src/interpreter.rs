@@ -156,8 +156,51 @@ impl Interpreter {
                 Ok(Some(value))
             }
 
+            Stmt::Assign{name, value} => {
+				let new_value = self.evaluate(value, environment)?;
+
+				if !environment.contains_key(name) {
+					return Err(format!(
+						"Undefined variable is being reassigned '{}' [E021]",
+						name
+					));
+				}
+
+				environment.insert(name.clone(), new_value);
+
+				Ok(None)
+            }
+
             Stmt::Expr(expression) => {
                 self.evaluate(expression, environment)?;
+                Ok(None)
+            }
+
+            Stmt::If {
+                Condition,
+                then_branch,
+                else_branch,
+            } => {
+                let condition = self.evaluate(Condition, environment)?;
+
+                let branch = match condition {
+                    Value::Boolean(BooleanValue::True) => Some(then_branch),
+                    Value::Boolean(BooleanValue::False) => else_branch.as_ref(),
+                    _ => {
+                        return Err(
+                            "If condition must be a valid boolean condition [E019]".to_string()
+                        );
+                    }
+                };
+
+                if let Some(statements) = branch {
+                    for statement in statements {
+                        if let Some(value) = self.execute_statement(statement, environment)? {
+                            return Ok(Some(value));
+                        }
+                    }
+                }
+
                 Ok(None)
             }
         }

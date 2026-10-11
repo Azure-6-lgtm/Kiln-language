@@ -17,10 +17,10 @@
 */
 
 mod ast;
+mod interpreter;
 mod lexer;
 mod parser;
 mod token;
-mod interpreter;
 
 use interpreter::Interpreter;
 use lexer::Lexer;
@@ -36,25 +36,25 @@ fn main() {
     println!("Made by Azure-6-lgtm");
     println!("-----------------------------");
 
-	if args.len() < 2 {
-		println!("Usage: Kiln [OPTION] [FILE]");
-		return;
-	}
+    if args.len() < 2 {
+        println!("Usage: Kiln [OPTION] [FILE]");
+        return;
+    }
 
-	match args[1].as_str() {
-		"--ver" => {
-			println!("Kiln Programming Language V0.0.1 alpha");
-			return;
-		},
-		_ => {},
-	};
+    match args[1].as_str() {
+        "--ver" => {
+            println!("Kiln Programming Language V0.0.1 alpha");
+            return;
+        }
+        _ => {}
+    };
 
-	let filename = &args[1];
+    let filename = &args[1];
 
-	if !filename.ends_with(".kiln") {
-		eprintln!("Kiln: File is not a valid kiln file, A valid Kiln file must end with .kiln");
-		return;
-	}
+    if !filename.ends_with(".kiln") {
+        eprintln!("Kiln: File is not a valid kiln file, A valid Kiln file must end with .kiln");
+        return;
+    }
 
     let source = match fs::read_to_string(filename) {
         Ok(source) => source,
@@ -64,7 +64,6 @@ fn main() {
         }
     };
 
-    
     let mut lexer = Lexer::new(&source);
 
     let tokens = match lexer.tokenize() {
@@ -78,7 +77,6 @@ fn main() {
         }
     };
 
-    
     let mut parser = Parser::new(tokens);
 
     let program = match parser.parse_program() {
@@ -91,7 +89,7 @@ fn main() {
             process::exit(1);
         }
     };
-    
+
     let mut interpreter = Interpreter::new(&program);
 
     if let Err(error) = interpreter.run() {

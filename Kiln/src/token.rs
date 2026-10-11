@@ -13,6 +13,8 @@ pub enum TokenKind {
     For,
     In,
     Try,
+    If,
+    Else,
 
     // Some Data ypes
     IntType,
@@ -33,10 +35,10 @@ pub enum TokenKind {
     Slash,
     Percent,
 
-	// Boolean Results
-	True,
-	False,
-	
+    // Boolean Results
+    True,
+    False,
+
     // Relational and assignement operators
     Equal,
     PlusEqual,

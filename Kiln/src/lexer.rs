@@ -286,9 +286,9 @@ impl Lexer {
                         "import" => TokenKind::Import,
                         "struct" => TokenKind::Struct,
                         "enum" => TokenKind::Enum,
-                        "fn" => TokenKind::Fn,
-                        "let" => TokenKind::Let,
-                        "var" => TokenKind::Var,
+                        "func" => TokenKind::Fn,
+                        "const" => TokenKind::Let,
+                        "mut" => TokenKind::Var,
                         "return" => TokenKind::Return,
                         "switch" => TokenKind::Switch,
                         "case" => TokenKind::Case,
@@ -302,6 +302,8 @@ impl Lexer {
                         "bool" => TokenKind::BooleanType,
                         "True" => TokenKind::True,
                         "False" => TokenKind::False,
+                        "when" => TokenKind::If,
+                        "otherwise" => TokenKind::Else,
                         _ => TokenKind::Identifier(word),
                     }
                 }
