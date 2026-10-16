@@ -245,4 +245,4 @@ Issues and pull requests are welcome.
 
 ## License
 
-The entirety of Kiln-language is licensed under MIT license
+The entirety of Kiln-language is licensed under Mozilla Public License 2.0
