@@ -28,9 +28,9 @@ impl Parser {
     }
 
     fn peek_next(&self) -> &Token {
-    let next_position = (self.position + 1).min(self.tokens.len() - 1);
-    &self.tokens[next_position]
-}
+        let next_position = (self.position + 1).min(self.tokens.len() - 1);
+        &self.tokens[next_position]
+    }
 
     fn advance(&mut self) -> Token {
         let token = self.tokens[self.position].clone();
@@ -62,69 +62,65 @@ impl Parser {
         }
     }
 
-    
-pub fn parse_statement(&mut self) -> Result<Stmt, ParseError> {
-    if matches!(self.peek().kind, TokenKind::Identifier(_))
-        && self.peek_next().kind == TokenKind::Equal
-    {
-        let name = match self.advance().kind {
-            TokenKind::Identifier(name) => name,
-            _ => unreachable!(),
-        };
+    pub fn parse_statement(&mut self) -> Result<Stmt, ParseError> {
+        if matches!(self.peek().kind, TokenKind::Identifier(_))
+            && self.peek_next().kind == TokenKind::Equal
+        {
+            let name = match self.advance().kind {
+                TokenKind::Identifier(name) => name,
+                _ => unreachable!(),
+            };
 
-        self.expect(TokenKind::Equal)?;
-
-        let value = self.parse_expression()?;
-        self.expect(TokenKind::Semicolon)?;
-
-        return Ok(Stmt::Assign { name, value });
-    }
-
-    match self.peek().kind {
-        TokenKind::If => self.parse_if_statement(),
-
-        TokenKind::Let => {
-            self.advance();
-            self.parse_variable(false)
-        }
-
-        TokenKind::Var => {
-            self.advance();
-            self.parse_variable(true)
-        }
-
-        TokenKind::Return => {
-            let return_token = self.advance();
-
-            if self.peek().kind == TokenKind::Semicolon {
-                self.advance();
-                return Ok(Stmt::Return(None));
-            }
+            self.expect(TokenKind::Equal)?;
 
             let value = self.parse_expression()?;
             self.expect(TokenKind::Semicolon)?;
 
-            if self.current_return_type.as_deref() == Some("void") {
-                return Err(ParseError {
-                    message:
-                        "A void function cannot return a value [E002]"
-                            .to_string(),
-                    line: return_token.line,
-                    column: return_token.column,
-                });
+            return Ok(Stmt::Assign { name, value });
+        }
+
+        match self.peek().kind {
+            TokenKind::If => self.parse_if_statement(),
+
+            TokenKind::Let => {
+                self.advance();
+                self.parse_variable(false)
             }
 
-            Ok(Stmt::Return(Some(value)))
-        }
+            TokenKind::Var => {
+                self.advance();
+                self.parse_variable(true)
+            }
 
-        _ => {
-            let expr = self.parse_expression()?;
-            self.expect(TokenKind::Semicolon)?;
-            Ok(Stmt::Expr(expr))
+            TokenKind::Return => {
+                let return_token = self.advance();
+
+                if self.peek().kind == TokenKind::Semicolon {
+                    self.advance();
+                    return Ok(Stmt::Return(None));
+                }
+
+                let value = self.parse_expression()?;
+                self.expect(TokenKind::Semicolon)?;
+
+                if self.current_return_type.as_deref() == Some("void") {
+                    return Err(ParseError {
+                        message: "A void function cannot return a value [E002]".to_string(),
+                        line: return_token.line,
+                        column: return_token.column,
+                    });
+                }
+
+                Ok(Stmt::Return(Some(value)))
+            }
+
+            _ => {
+                let expr = self.parse_expression()?;
+                self.expect(TokenKind::Semicolon)?;
+                Ok(Stmt::Expr(expr))
+            }
         }
     }
-}
-
 
     pub fn parse_program(&mut self) -> Result<Program, ParseError> {
         let mut items = Vec::new();
@@ -176,9 +172,16 @@ pub fn parse_statement(&mut self) -> Result<Stmt, ParseError> {
 
         let else_branch = if self.peek().kind == TokenKind::Else {
             self.advance();
-            self.expect(TokenKind::LeftBrace)?;
 
-            Some(self.parse_function_body()?)
+            if self.peek().kind == TokenKind::If {
+                // Parse "otherwise when" as a nested conditional.
+                let nested_if = self.parse_if_statement()?;
+                Some(vec![nested_if])
+            } else {
+                // Parse a normal "otherwise" block.
+                self.expect(TokenKind::LeftBrace)?;
+                Some(self.parse_function_body()?)
+            }
         } else {
             None
         };

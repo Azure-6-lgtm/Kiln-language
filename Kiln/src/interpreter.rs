@@ -3,8 +3,8 @@ use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
 pub struct Variable {
-	pub value: Value,
-	pub mutable: bool,
+    pub value: Value,
+    pub mutable: bool,
 }
 
 #[derive(Debug, Clone)]
@@ -88,8 +88,8 @@ impl Interpreter {
             environment.insert(
                 parameter.name.clone(),
                 Variable {
-					value: argument,
-					mutable: false,
+                    value: argument,
+                    mutable: false,
                 },
             );
         }
@@ -154,21 +154,21 @@ impl Interpreter {
     ) -> Result<Option<Value>, String> {
         match statement {
             Stmt::Let {
-				name,
-				mutable,
-				value,
+                name,
+                mutable,
+                value,
             } => {
-       			let value = self.evaluate(value, environment)?;
+                let value = self.evaluate(value, environment)?;
 
-       			environment.insert(
-					name.clone(),
-					Variable {
-						value,
-						mutable: *mutable
-					},
-       			);
+                environment.insert(
+                    name.clone(),
+                    Variable {
+                        value,
+                        mutable: *mutable,
+                    },
+                );
 
-       			Ok(None)
+                Ok(None)
             }
 
             Stmt::Return(expression) => {
@@ -180,22 +180,22 @@ impl Interpreter {
                 Ok(Some(value))
             }
 
-            Stmt::Assign{name, value} => {
-				let new_value = self.evaluate(value, environment)?;
+            Stmt::Assign { name, value } => {
+                let new_value = self.evaluate(value, environment)?;
 
-				let variable = environment.get_mut(name).ok_or_else(|| {
-					format!("Undefined variable : {name} [E021] ")
-				})?;
+                let variable = environment
+                    .get_mut(name)
+                    .ok_or_else(|| format!("Undefined variable : {name} [E021] "))?;
 
-				if !variable.mutable {
-					return Err(
-						format!("Cannot assign new value to immutable variable: {name} [E020]")
-					)
-				}
+                if !variable.mutable {
+                    return Err(format!(
+                        "Cannot assign new value to immutable variable: {name} [E020]"
+                    ));
+                }
 
-				variable.value = new_value;
+                variable.value = new_value;
 
-				Ok(None)
+                Ok(None)
             }
 
             Stmt::Expr(expression) => {
@@ -252,13 +252,13 @@ impl Interpreter {
             Expr::Variable(name) => environment
                 .get(name)
                 .map(|variable| variable.value.clone())
-                .ok_or_else( || format!("Undefined variable: {name} [E015]")),
+                .ok_or_else(|| format!("Undefined variable: {name} [E015]")),
 
             Expr::Boolean(Value) => {
                 let boolean = if *Value {
-					BooleanValue::True
+                    BooleanValue::True
                 } else {
-					BooleanValue::False
+                    BooleanValue::False
                 };
 
                 Ok(Value::Boolean(boolean))
