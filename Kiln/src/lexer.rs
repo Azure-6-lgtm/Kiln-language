@@ -235,14 +235,23 @@ impl Lexer {
 
                     while let Some(c) = self.peek() {
                         if c == '"' {
+                            self.advance();
                             break;
                         }
 
                         value.push(self.advance().unwrap());
                     }
 
-                    if self.peek() == Some('"') {
-                        self.advance();
+                    if !self
+                        .source
+                        .get(self.position.saturating_sub(1))
+                        .is_some_and(|&c| c == '"')
+                    {
+                        return Err(LexerError {
+                            message: "Unterminated string literal [E022]".to_string(),
+                            line,
+                            column,
+                        });
                     }
 
                     TokenKind::StringSlice(value)
@@ -308,9 +317,11 @@ impl Lexer {
                     }
                 }
                 _ => {
-                    // Unknown characters are skipped in this prototype.
-                    self.advance();
-                    continue;
+                    return Err(LexerError {
+                        message: format!("Unexpected character '{ch}' [E023]"),
+                        line,
+                        column,
+                    });
                 }
             };
 
