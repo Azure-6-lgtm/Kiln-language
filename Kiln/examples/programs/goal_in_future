@@ -10,19 +10,19 @@ enum Shape {
     Rect(f64, f64),
 }
 
-fn area(s: Shape) -> f64 {
+func area(s: Shape) -> f64 {
     switch (s) {
         case Circle(r):  return 3.14159 * r * r;
         case Rect(w, h): return w * h;
     }
 }
 
-fn read_config(path: string) -> string! {
+func read_config(path: string) -> string! {
     let file = try io.open(path);
     return try file.read_all();
 }
 
-fn main() -> int {
+func main() -> int {
     let shapes = [Shape.Circle(2.0), Shape.Rect(3.0, 4.0)];
     var total = 0.0;
 

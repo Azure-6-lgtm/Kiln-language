@@ -1,0 +1,12 @@
+func main() -> void {
+    print(2 + 3);
+    print(10 - 4);
+    print(6 * 7);
+    print(20 / 5);
+
+    // Multiplication should happen before addition.
+    print(2 + 3 * 4);
+
+    // Parentheses should override precedence.
+    print((2 + 3) * 4);
+}

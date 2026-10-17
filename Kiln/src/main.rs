@@ -13,7 +13,7 @@
 |_|\_\_|_|_| |_|
    source in, solid out
 
-  Kiln version 0.0.1 alpha pre-release
+  Kiln version 0.1.0  alpha pre-release
 */
 
 mod ast;
@@ -32,7 +32,7 @@ use std::process;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    println!("Kiln Programming Language V0.0.1 alpha");
+    println!("Kiln Programming Language V0.1.0 alpha");
     println!("Made by Azure-6-lgtm");
     println!("-----------------------------");
 
@@ -43,7 +43,7 @@ fn main() {
 
     match args[1].as_str() {
         "--ver" => {
-            println!("Kiln Programming Language V0.0.1 alpha");
+            println!("Kiln Programming Language V0.1.0 alpha pre-release");
             return;
         }
         _ => {}

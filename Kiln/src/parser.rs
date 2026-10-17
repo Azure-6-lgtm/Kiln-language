@@ -50,6 +50,14 @@ impl Parser {
         }
     }
 
+    fn error_at(&self, line: usize, column: usize, message: &str) -> ParseError {
+        ParseError {
+            message: message.to_string(),
+            line,
+            column,
+        }
+    }
+
     fn expect(&mut self, expected: TokenKind) -> Result<Token, ParseError> {
         if self.peek().kind == expected {
             Ok(self.advance())
@@ -142,9 +150,16 @@ impl Parser {
     }
 
     fn parse_variable(&mut self, mutable: bool) -> Result<Stmt, ParseError> {
-        let name = match self.advance().kind {
+        let token = self.advance();
+        let name = match token.kind {
             TokenKind::Identifier(name) => name,
-            _ => return Err(self.error("Expected variable name [E004]")),
+            _ => {
+                return Err(self.error_at(
+                    token.line,
+                    token.column,
+                    "Expected variable name [E004]",
+                ));
+            }
         };
 
         self.expect(TokenKind::Equal)?;
@@ -345,10 +360,17 @@ impl Parser {
 
     pub fn parse_function(&mut self) -> Result<Function, ParseError> {
         self.expect(TokenKind::Fn)?;
+        let mut token = self.advance();
 
-        let name = match self.advance().kind {
+        let name = match token.kind {
             TokenKind::Identifier(name) => name,
-            _ => return Err(self.error("Expected function name [E005]")),
+            _ => {
+                return Err(self.error_at(
+                    token.line,
+                    token.column,
+                    "Expected function name [E005]",
+                ));
+            }
         };
 
         self.expect(TokenKind::LeftParen)?;
@@ -357,22 +379,35 @@ impl Parser {
 
         if self.peek().kind != TokenKind::RightParen {
             loop {
-                let param_name = match self.advance().kind {
+                let token = self.advance();
+
+                let param_name = match token.kind {
                     TokenKind::Identifier(name) => name,
                     _ => {
-                        return Err(self.error("Expected parameter name [E006]"));
+                        return Err(self.error_at(
+                            token.line,
+                            token.column,
+                            "Expected parameter name [E006]",
+                        ));
                     }
                 };
 
                 self.expect(TokenKind::Colon)?;
+                let type_token = self.advance();
 
-                let ty = match self.advance().kind {
+                let ty = match type_token.kind {
                     TokenKind::Identifier(name) => name,
                     TokenKind::IntType => "int".to_string(),
                     TokenKind::FloatType => "float".to_string(),
                     TokenKind::StringType => "string".to_string(),
                     TokenKind::BooleanType => "bool".to_string(),
-                    _ => return Err(self.error("Expected parameter type [E007]")),
+                    _ => {
+                        return Err(self.error_at(
+                            type_token.line,
+                            type_token.column,
+                            "Expected parameter type [E007]",
+                        ));
+                    }
                 };
 
                 params.push(Parameter {
