@@ -6,7 +6,7 @@
 
 Kiln is a small, high-level programming language with a C-style feel, written in Rust. Source files (`.kiln`) are lexed, parsed into an AST, and run by a tree-walking interpreter.
 
-**Status:** early alpha (`0.0.1 alpha pre-release`). The language is small and changing quickly.
+**Status:** early alpha (`0.1.0 alpha pre-release`). The language is small and changing quickly.
 
 ## Example
 
@@ -63,6 +63,12 @@ Or run the built binary directly:
 ```sh
 Kiln hello.kiln
 Kiln --ver
+```
+
+### Using the installation script
+```sh
+chmod +x install-kiln.sh
+bash install-kiln.sh
 ```
 
 Usage: `Kiln [OPTION] [FILE]`

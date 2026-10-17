@@ -1,0 +1,24 @@
+func main() -> void {
+    const result = add(12, 8);
+    print(result);
+
+    print(double(7));
+    print(is_positive(5));
+    print(is_positive(-3));
+}
+
+func add(a: int, b: int) -> int {
+    return a + b;
+}
+
+func double(n: int) -> int {
+    return n * 2;
+}
+
+func is_positive(n: int) -> bool {
+    when (n > 0) {
+        return True;
+    } otherwise {
+        return False;
+    }
+}

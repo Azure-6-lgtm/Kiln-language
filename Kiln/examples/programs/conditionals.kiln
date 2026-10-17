@@ -1,0 +1,11 @@
+func main() -> void {
+    mut age = 16;
+
+    when (age >= 18) {
+        print("Adult");
+    } otherwise when (age >= 13) {
+        print("Teenager");
+    } otherwise {
+        print("Child");
+    }
+}
