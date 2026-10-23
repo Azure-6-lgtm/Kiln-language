@@ -1,4 +1,3 @@
-
 use crate::ast::{BinaryOp, Expr, Function, Item, Parameter, Program, Stmt, UnaryOp};
 use crate::token::{Token, TokenKind};
 
@@ -144,7 +143,7 @@ impl Parser {
 
                 _ => {
                     return Err(
-                        self.error("Expected a main function declaration [E003]")
+                        self.error("Expected a function at top level [E003]")
                     );
                 }
             }
