@@ -113,8 +113,7 @@ impl Parser {
 
                 if self.current_return_type.as_deref() == Some("void") {
                     return Err(ParseError {
-                        message: "A void function cannot return a value [E002]"
-                            .to_string(),
+                        message: "A void function cannot return a value [E002]".to_string(),
                         line: return_token.line,
                         column: return_token.column,
                     });
@@ -142,9 +141,7 @@ impl Parser {
                 }
 
                 _ => {
-                    return Err(
-                        self.error("Expected a function at top level [E003]")
-                    );
+                    return Err(self.error("Expected a function at top level [E003]"));
                 }
             }
         }
@@ -519,9 +516,7 @@ impl Parser {
     fn parse_function_body(&mut self) -> Result<Vec<Stmt>, ParseError> {
         let mut body = Vec::new();
 
-        while self.peek().kind != TokenKind::RightBrace
-            && self.peek().kind != TokenKind::EOF
-        {
+        while self.peek().kind != TokenKind::RightBrace && self.peek().kind != TokenKind::EOF {
             body.push(self.parse_statement()?);
         }
 
@@ -530,4 +525,3 @@ impl Parser {
         Ok(body)
     }
 }
-
