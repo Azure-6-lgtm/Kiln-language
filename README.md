@@ -74,7 +74,7 @@ chmod +x install-kiln.sh
 ### Using the unininstallation script
 ```sh
 chmod +x uninstall-kiln.sh
-./uninstall-kiln.sh
+./uninstall.sh
 ```
 
 Usage: `Kiln [OPTION] [FILE]`
