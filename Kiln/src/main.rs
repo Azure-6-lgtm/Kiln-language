@@ -13,7 +13,7 @@
 |_|\_\_|_|_| |_|
    source in, solid out
 
-  Kiln version 0.1.0  alpha pre-release
+  Kiln version 0.2.0 alpha pre-release
 */
 
 mod ast;

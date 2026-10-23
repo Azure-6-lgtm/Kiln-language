@@ -313,6 +313,9 @@ impl Lexer {
                         "False" => TokenKind::False,
                         "when" => TokenKind::If,
                         "otherwise" => TokenKind::Else,
+                        "and" => TokenKind::And,
+                        "or" => TokenKind::Or,
+                        "not" => TokenKind::Not,
                         _ => TokenKind::Identifier(word),
                     }
                 }
