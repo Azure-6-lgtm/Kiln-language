@@ -68,6 +68,11 @@ pub enum TokenKind {
     Comma,
     Dot,
 
+   	// Logical Operators
+    And,
+    Or,
+    Not,
+
     // Special things
     EOF,
 }

@@ -1,4 +1,5 @@
-use crate::ast::{BinaryOp, Expr, Function, Item, Program, Stmt};
+
+use crate::ast::{BinaryOp, Expr, Function, Item, Program, Stmt, UnaryOp};
 use std::collections::HashMap;
 
 #[derive(Debug, Clone)]
@@ -26,10 +27,8 @@ impl std::fmt::Display for Value {
         match self {
             Value::Number(n) => write!(f, "{n}"),
             Value::String(s) => write!(f, "{s}"),
-            Value::Boolean(boolean) => match boolean {
-                BooleanValue::True => write!(f, "True"),
-                BooleanValue::False => write!(f, "False"),
-            },
+            Value::Boolean(BooleanValue::True) => write!(f, "True"),
+            Value::Boolean(BooleanValue::False) => write!(f, "False"),
             Value::Void => write!(f, "void"),
         }
     }
@@ -56,7 +55,11 @@ impl Interpreter {
         self.call_function("main", Vec::new())
     }
 
-    fn call_function(&mut self, name: &str, args: Vec<Value>) -> Result<Value, String> {
+    fn call_function(
+        &mut self,
+        name: &str,
+        args: Vec<Value>,
+    ) -> Result<Value, String> {
         if name == "print" {
             for (index, value) in args.iter().enumerate() {
                 if index > 0 {
@@ -97,7 +100,9 @@ impl Interpreter {
         let mut result = Value::Void;
 
         for statement in &function.body {
-            if let Some(value) = self.execute_statement(statement, &mut environment)? {
+            if let Some(value) =
+                self.execute_statement(statement, &mut environment)?
+            {
                 result = value;
                 break;
             }
@@ -105,41 +110,23 @@ impl Interpreter {
 
         match (function.return_type.as_deref(), &result) {
             (Some("int"), Value::Number(n)) if n.fract() == 0.0 => {}
-            (Some("float"), Value::Number(n)) => {}
-            (Some("string"), Value::String(s)) => {}
+            (Some("float"), Value::Number(_)) => {}
+            (Some("string"), Value::String(_)) => {}
             (Some("void"), Value::Void) => {}
-            (Some("bool"), Value::Boolean(boolean)) => {
-                match boolean {
-                    BooleanValue::True => {}
-                    BooleanValue::False => {}
-                    _ => {
-                        return Err(format!("Boolean can only be either True or False"));
-                    }
-                };
-            }
+            (Some("bool"), Value::Boolean(_)) => {}
             (None, _) => {}
             (Some(expected), actual) => {
+                let actual_type = match actual {
+                    Value::Number(n) if n.fract() == 0.0 => "int",
+                    Value::Number(_) => "float",
+                    Value::String(_) => "string",
+                    Value::Void => "void",
+                    Value::Boolean(_) => "bool",
+                };
+
                 return Err(format!(
-                    "Function {} declared return type {} but returned type {} [E013])",
-                    function.name,
-                    expected,
-                    match actual {
-                        Value::Number(n) if n.fract() == 0.0 => {
-                            "int"
-                        }
-                        Value::Number(_) => {
-                            "float"
-                        }
-                        Value::String(_) => {
-                            "string"
-                        }
-                        Value::Void => {
-                            "void"
-                        }
-                        Value::Boolean(_) => {
-                            "boolean"
-                        }
-                    }
+                    "Function '{}' declared return type '{}' but returned type '{}' [E013]",
+                    function.name, expected, actual_type
                 ));
             }
         }
@@ -173,7 +160,9 @@ impl Interpreter {
 
             Stmt::Return(expression) => {
                 let value = match expression {
-                    Some(expression) => self.evaluate(expression, environment)?,
+                    Some(expression) => {
+                        self.evaluate(expression, environment)?
+                    }
                     None => Value::Void,
                 };
 
@@ -185,7 +174,9 @@ impl Interpreter {
 
                 let variable = environment
                     .get_mut(name)
-                    .ok_or_else(|| format!("Undefined variable : {name} [E021] "))?;
+                    .ok_or_else(|| {
+                        format!("Undefined variable: {name} [E021]")
+                    })?;
 
                 if !variable.mutable {
                     return Err(format!(
@@ -212,17 +203,21 @@ impl Interpreter {
 
                 let branch = match condition {
                     Value::Boolean(BooleanValue::True) => Some(then_branch),
-                    Value::Boolean(BooleanValue::False) => else_branch.as_ref(),
+                    Value::Boolean(BooleanValue::False) => {
+                        else_branch.as_ref()
+                    }
                     _ => {
                         return Err(
-                            "If condition must be a valid boolean condition [E019]".to_string()
+                            "If condition must be a boolean [E019]".to_string()
                         );
                     }
                 };
 
                 if let Some(statements) = branch {
                     for statement in statements {
-                        if let Some(value) = self.execute_statement(statement, environment)? {
+                        if let Some(value) =
+                            self.execute_statement(statement, environment)?
+                        {
                             return Ok(Some(value));
                         }
                     }
@@ -242,7 +237,9 @@ impl Interpreter {
             Expr::Number(number) => {
                 let number = number
                     .parse::<f64>()
-                    .map_err(|_| format!("Invalid number: {number} [E014]"))?;
+                    .map_err(|_| {
+                        format!("Invalid number: {number} [E014]")
+                    })?;
 
                 Ok(Value::Number(number))
             }
@@ -252,52 +249,178 @@ impl Interpreter {
             Expr::Variable(name) => environment
                 .get(name)
                 .map(|variable| variable.value.clone())
-                .ok_or_else(|| format!("Undefined variable: {name} [E015]")),
+                .ok_or_else(|| {
+                    format!("Undefined variable: {name} [E015]")
+                }),
 
-            Expr::Boolean(Value) => {
-                let boolean = if *Value {
-                    BooleanValue::True
-                } else {
-                    BooleanValue::False
-                };
+            Expr::Boolean(value) => {
+                Ok(boolean_value(*value))
+            }
 
-                Ok(Value::Boolean(boolean))
+            Expr::Unary { op, operand } => {
+                let value = self.evaluate(operand, environment)?;
+
+                match (op, value) {
+                    (
+                        UnaryOp::Not,
+                        Value::Boolean(BooleanValue::True),
+                    ) => Ok(boolean_value(false)),
+
+                    (
+                        UnaryOp::Not,
+                        Value::Boolean(BooleanValue::False),
+                    ) => Ok(boolean_value(true)),
+
+                    (UnaryOp::Not, _) => Err(
+                        "Operator 'not' requires a boolean [E024]".to_string()
+                    ),
+                }
             }
 
             Expr::Binary { left, op, right } => {
                 let left = self.evaluate(left, environment)?;
-                let right = self.evaluate(right, environment)?;
 
-                match (left, right) {
-                    (Value::Number(a), Value::Number(b)) => match op {
-                        BinaryOp::Add => Ok(Value::Number(a + b)),
-                        BinaryOp::Subtract => Ok(Value::Number(a - b)),
-                        BinaryOp::Multiply => Ok(Value::Number(a * b)),
-
-                        BinaryOp::Divide => {
-                            if b == 0.0 {
-                                return Err("Division by zero [E016]".to_string());
+                match op {
+                    BinaryOp::And => {
+                        match left {
+                            Value::Boolean(BooleanValue::False) => {
+                                return Ok(boolean_value(false));
                             }
-
-                            Ok(Value::Number(a / b))
+                            Value::Boolean(BooleanValue::True) => {}
+                            _ => {
+                                return Err(
+                                    "Operator 'and' requires booleans [E025]"
+                                        .to_string(),
+                                );
+                            }
                         }
 
-                        BinaryOp::Equal => Ok(boolean_value(a == b)),
-                        BinaryOp::NotEqual => Ok(boolean_value(a != b)),
-                        BinaryOp::Less => Ok(boolean_value(a < b)),
-                        BinaryOp::LessEqual => Ok(boolean_value(a <= b)),
-                        BinaryOp::Greater => Ok(boolean_value(a > b)),
-                        BinaryOp::GreaterEqual => Ok(boolean_value(a >= b)),
-                    },
+                        let right = self.evaluate(right, environment)?;
 
-                    (Value::String(a), Value::String(b)) => match op {
-                        BinaryOp::Add => Ok(Value::String(a + &b)),
-                        BinaryOp::Equal => Ok(boolean_value(a == b)),
-                        BinaryOp::NotEqual => Ok(boolean_value(a != b)),
-                        _ => Err("Invalid string operation [E017]".to_string()),
-                    },
+                        match right {
+                            Value::Boolean(BooleanValue::True) => {
+                                Ok(boolean_value(true))
+                            }
+                            Value::Boolean(BooleanValue::False) => {
+                                Ok(boolean_value(false))
+                            }
+                            _ => Err(
+                                "Operator 'and' requires booleans [E025]"
+                                    .to_string(),
+                            ),
+                        }
+                    }
 
-                    _ => Err("Invalid types for binary operation [E017]".to_string()),
+                    BinaryOp::Or => {
+                        match left {
+                            Value::Boolean(BooleanValue::True) => {
+                                return Ok(boolean_value(true));
+                            }
+                            Value::Boolean(BooleanValue::False) => {}
+                            _ => {
+                                return Err(
+                                    "Operator 'or' requires booleans [E026]"
+                                        .to_string(),
+                                );
+                            }
+                        }
+
+                        let right = self.evaluate(right, environment)?;
+
+                        match right {
+                            Value::Boolean(BooleanValue::True) => {
+                                Ok(boolean_value(true))
+                            }
+                            Value::Boolean(BooleanValue::False) => {
+                                Ok(boolean_value(false))
+                            }
+                            _ => Err(
+                                "Operator 'or' requires booleans [E026]"
+                                    .to_string(),
+                            ),
+                        }
+                    }
+
+                    _ => {
+                        let right = self.evaluate(right, environment)?;
+
+                        match (left, right) {
+                            (Value::Number(a), Value::Number(b)) => {
+                                match op {
+                                    BinaryOp::Add => {
+                                        Ok(Value::Number(a + b))
+                                    }
+                                    BinaryOp::Subtract => {
+                                        Ok(Value::Number(a - b))
+                                    }
+                                    BinaryOp::Multiply => {
+                                        Ok(Value::Number(a * b))
+                                    }
+                                    BinaryOp::Divide => {
+                                        if b == 0.0 {
+                                            return Err(
+                                                "Division by zero [E016]"
+                                                    .to_string(),
+                                            );
+                                        }
+
+                                        Ok(Value::Number(a / b))
+                                    }
+                                    BinaryOp::Equal => {
+                                        Ok(boolean_value(a == b))
+                                    }
+                                    BinaryOp::NotEqual => {
+                                        Ok(boolean_value(a != b))
+                                    }
+                                    BinaryOp::Less => {
+                                        Ok(boolean_value(a < b))
+                                    }
+                                    BinaryOp::LessEqual => {
+                                        Ok(boolean_value(a <= b))
+                                    }
+                                    BinaryOp::Greater => {
+                                        Ok(boolean_value(a > b))
+                                    }
+                                    BinaryOp::GreaterEqual => {
+                                        Ok(boolean_value(a >= b))
+                                    }
+                                    BinaryOp::And | BinaryOp::Or => {
+                                        unreachable!(
+                                            "logical operators handled above"
+                                        )
+                                    }
+                                }
+                            }
+
+                            (Value::String(a), Value::String(b)) => {
+                                match op {
+                                    BinaryOp::Add => {
+                                        Ok(Value::String(a + &b))
+                                    }
+                                    BinaryOp::Equal => {
+                                        Ok(boolean_value(a == b))
+                                    }
+                                    BinaryOp::NotEqual => {
+                                        Ok(boolean_value(a != b))
+                                    }
+                                    BinaryOp::And | BinaryOp::Or => {
+                                        unreachable!(
+                                            "logical operators handled above"
+                                        )
+                                    }
+                                    _ => Err(
+                                        "Invalid string operation [E017]"
+                                            .to_string(),
+                                    ),
+                                }
+                            }
+
+                            _ => Err(
+                                "Invalid types for binary operation [E017]"
+                                    .to_string(),
+                            ),
+                        }
+                    }
                 }
             }
 
@@ -305,7 +428,10 @@ impl Interpreter {
                 let name = match callee.as_ref() {
                     Expr::Variable(name) => name.clone(),
                     _ => {
-                        return Err("Only named functions can be called [E018]".to_string());
+                        return Err(
+                            "Only named functions can be called [E018]"
+                                .to_string(),
+                        );
                     }
                 };
 
@@ -328,3 +454,4 @@ fn boolean_value(value: bool) -> Value {
         BooleanValue::False
     })
 }
+

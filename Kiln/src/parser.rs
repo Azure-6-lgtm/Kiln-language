@@ -1,4 +1,4 @@
-use crate::ast::{BinaryOp, Expr, Function, Item, Parameter, Program, Stmt};
+use crate::ast::{BinaryOp, Expr, Function, Item, Parameter, Program, Stmt, UnaryOp};
 use crate::token::{Token, TokenKind};
 
 #[derive(Debug)]
@@ -151,6 +151,7 @@ impl Parser {
 
     fn parse_variable(&mut self, mutable: bool) -> Result<Stmt, ParseError> {
         let token = self.advance();
+
         let name = match token.kind {
             TokenKind::Identifier(name) => name,
             _ => {
@@ -189,11 +190,9 @@ impl Parser {
             self.advance();
 
             if self.peek().kind == TokenKind::If {
-                // Parse "otherwise when" as a nested conditional.
                 let nested_if = self.parse_if_statement()?;
                 Some(vec![nested_if])
             } else {
-                // Parse a normal "otherwise" block.
                 self.expect(TokenKind::LeftBrace)?;
                 Some(self.parse_function_body()?)
             }
@@ -208,12 +207,61 @@ impl Parser {
         })
     }
 
-    // Entry point for expression parsing.
     pub fn parse_expression(&mut self) -> Result<Expr, ParseError> {
+        self.parse_or()
+    }
+
+    pub fn parse_or(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.parse_and()?;
+
+        while self.peek().kind == TokenKind::Or {
+            self.advance();
+
+            let right = self.parse_and()?;
+
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                op: BinaryOp::Or,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    pub fn parse_and(&mut self) -> Result<Expr, ParseError> {
+        let mut expr = self.parse_not()?;
+
+        while self.peek().kind == TokenKind::And {
+            self.advance();
+
+            let right = self.parse_not()?;
+
+            expr = Expr::Binary {
+                left: Box::new(expr),
+                op: BinaryOp::And,
+                right: Box::new(right),
+            };
+        }
+
+        Ok(expr)
+    }
+
+    fn parse_not(&mut self) -> Result<Expr, ParseError> {
+        if self.peek().kind == TokenKind::Not {
+            self.advance();
+
+            let operand = self.parse_not()?;
+
+            return Ok(Expr::Unary {
+                op: UnaryOp::Not,
+                operand: Box::new(operand),
+            });
+        }
+
         self.parse_comparison()
     }
 
-    // Lowest precedence: comparisons and equality.
     fn parse_comparison(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.parse_addition()?;
 
@@ -242,7 +290,6 @@ impl Parser {
         Ok(expr)
     }
 
-    // Addition and subtraction.
     fn parse_addition(&mut self) -> Result<Expr, ParseError> {
         let mut expr = self.parse_multiplication()?;
 
@@ -267,9 +314,8 @@ impl Parser {
         Ok(expr)
     }
 
-    // Multiplication and division.
     fn parse_multiplication(&mut self) -> Result<Expr, ParseError> {
-        let mut expr = self.parse_primary()?;
+        let mut expr = self.parse_unary()?;
 
         loop {
             let op = match self.peek().kind {
@@ -280,7 +326,7 @@ impl Parser {
 
             self.advance();
 
-            let right = self.parse_primary()?;
+            let right = self.parse_unary()?;
 
             expr = Expr::Binary {
                 left: Box::new(expr),
@@ -292,7 +338,22 @@ impl Parser {
         Ok(expr)
     }
 
-    // Literals, variables, function calls, and parentheses.
+    fn parse_unary(&mut self) -> Result<Expr, ParseError> {
+        if self.peek().kind == TokenKind::Minus {
+            self.advance();
+
+            let operand = self.parse_unary()?;
+
+            return Ok(Expr::Binary {
+                left: Box::new(Expr::Number("0".to_string())),
+                op: BinaryOp::Subtract,
+                right: Box::new(operand),
+            });
+        }
+
+        self.parse_primary()
+    }
+
     fn parse_primary(&mut self) -> Result<Expr, ParseError> {
         let token = self.advance();
 
@@ -340,16 +401,6 @@ impl Parser {
                 Ok(expr)
             }
 
-            TokenKind::Minus => {
-                let expr = self.parse_primary()?;
-
-                Ok(Expr::Binary {
-                    left: Box::new(Expr::Number("0".to_string())),
-                    op: BinaryOp::Subtract,
-                    right: Box::new(expr),
-                })
-            }
-
             _ => Err(ParseError {
                 message: format!("Unexpected token: {:?} [E009]", token.kind),
                 line: token.line,
@@ -360,7 +411,8 @@ impl Parser {
 
     pub fn parse_function(&mut self) -> Result<Function, ParseError> {
         self.expect(TokenKind::Fn)?;
-        let mut token = self.advance();
+
+        let token = self.advance();
 
         let name = match token.kind {
             TokenKind::Identifier(name) => name,
@@ -393,6 +445,7 @@ impl Parser {
                 };
 
                 self.expect(TokenKind::Colon)?;
+
                 let type_token = self.advance();
 
                 let ty = match type_token.kind {

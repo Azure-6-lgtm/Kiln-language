@@ -6,12 +6,12 @@
 
 Kiln is a small, high-level programming language with a C-style feel, written in Rust. Source files (`.kiln`) are lexed, parsed into an AST, and run by a tree-walking interpreter.
 
-**Status:** early alpha (`0.1.0 alpha pre-release`). The language is small and changing quickly.
+**Status:** early alpha (`0.2.0 alpha pre-release`). The language is small and changing quickly.
 
 ## Example
 
 ```kiln
-// Kiln demo
+// Kiln 
 func main() -> void {
     const can_you_vote = check_voting_age(36);
 
@@ -68,7 +68,13 @@ Kiln --ver
 ### Using the installation script
 ```sh
 chmod +x install-kiln.sh
-bash install-kiln.sh
+./install-kiln.sh
+```
+
+### Using the unininstallation script
+```sh
+chmod +x uninstall-kiln.sh
+./uninstall.sh
 ```
 
 Usage: `Kiln [OPTION] [FILE]`
@@ -129,7 +135,7 @@ Kiln uses `when` and `otherwise`. Chain them with `otherwise when`.
 
 ```kiln
 func grade(score: int) -> string {
-    when (score >= 90) {
+    when (score >= 90 and score <= 100) {
         return "A";
     }
     otherwise when (score >= 80) {
@@ -142,6 +148,7 @@ func grade(score: int) -> string {
 ```
 
 The condition must be a `bool` (E019).
+Instead of symbols, the keywords `and`, `or` and `not` are used.
 
 ### Functions
 
@@ -173,6 +180,7 @@ func main() {
 ### Printing
 
 `print` is built in. It takes any number of arguments, separates them with spaces, and ends with a newline.
+However, it will be removed once the standard library us developers
 
 ```kiln
 print("Hello,", "Kiln");   // Hello, Kiln
@@ -221,12 +229,15 @@ Lexer and parser errors include a line and column. Runtime errors do not yet.
 | E021 | Runtime | Cannot assign to an undefined variable |
 | E022 | Lexer | Unterminated string |
 | E023 | Lexer | Unexpected character |
+| E024 | Runtime | Not requires a boolean condition |
+| E025 | Runtime | And requires a boolean condition
+| E026 | Runtime | Or requires a boolean condition
 
 ## Current limitations
 
 - No loops. Use recursion for now.
 - No `import`, `struct`, `enum`, `switch` or `try` yet (reserved keywords).
-- No `%`, `!`, `&&`, `||` or compound assignment such as `+=`.
+- No `%` or compound assignment such as `+=`.
 - Parameter types must be written but are not checked when a function is called. Mismatched operands still fail (E017).
 - Booleans cannot be compared with `==` or `!=`.
 - Strings have no escape sequences such as `\n`.

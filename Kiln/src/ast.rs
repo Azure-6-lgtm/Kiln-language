@@ -60,6 +60,10 @@ pub enum Expr {
         callee: Box<Expr>,
         args: Vec<Expr>,
     },
+    Unary {
+		op: UnaryOp,
+		operand: Box<Expr>,
+    },
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -75,4 +79,12 @@ pub enum BinaryOp {
     LessEqual,
     Greater,
     GreaterEqual,
+
+    And,
+    Or,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UnaryOp {
+	Not,
 }
