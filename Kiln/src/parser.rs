@@ -141,7 +141,7 @@ impl Parser {
                 }
 
                 _ => {
-                    return Err(self.error("Expected a main function declaration [E003]"));
+                    return Err(self.error("Expected a function at top level [E003]"));
                 }
             }
         }
