@@ -316,6 +316,7 @@ impl Lexer {
                         "and" => TokenKind::And,
                         "or" => TokenKind::Or,
                         "not" => TokenKind::Not,
+                        "while" => TokenKind::While,
                         _ => TokenKind::Identifier(word),
                     }
                 }

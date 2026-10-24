@@ -15,6 +15,7 @@ pub enum TokenKind {
     Try,
     If,
     Else,
+    While,
 
     // Some Data ypes
     IntType,
@@ -68,7 +69,7 @@ pub enum TokenKind {
     Comma,
     Dot,
 
-   	// Logical Operators
+    // Logical Operators
     And,
     Or,
     Not,

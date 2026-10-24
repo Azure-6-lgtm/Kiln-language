@@ -122,6 +122,8 @@ impl Parser {
                 Ok(Stmt::Return(Some(value)))
             }
 
+            TokenKind::While => self.parse_while_loop(),
+
             _ => {
                 let expr = self.parse_expression()?;
                 self.expect(TokenKind::Semicolon)?;
@@ -204,6 +206,23 @@ impl Parser {
             Condition,
             then_branch,
             else_branch,
+        })
+    }
+
+    fn parse_while_loop(&mut self) -> Result<Stmt, ParseError> {
+        self.expect(TokenKind::While)?;
+        self.expect(TokenKind::LeftParen)?;
+
+        let Condition = self.parse_expression()?;
+
+        self.expect(TokenKind::RightParen)?;
+        self.expect(TokenKind::LeftBrace)?;
+
+        let then_branch = self.parse_function_body()?;
+
+        Ok(Stmt::While {
+            Condition,
+            then_branch,
         })
     }
 
