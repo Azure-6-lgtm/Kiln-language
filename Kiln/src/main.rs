@@ -45,7 +45,7 @@ fn main() {
 
     match args[1].as_str() {
         "--ver" => {
-            println!("Kiln Programming Language V0.1.0 alpha pre-release");
+            println!("Kiln Programming Language V0.2.0 alpha pre-release");
             return;
         }
         _ => {}
