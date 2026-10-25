@@ -14,6 +14,8 @@
    source in, solid out
 
   Kiln version 0.2.0 alpha pre-release
+
+  maintained with love by Azure-6-lgtm and whoisnomore
 */
 
 mod ast;
@@ -32,7 +34,7 @@ use std::process;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
-    println!("Kiln Programming Language V0.1.0 alpha");
+    println!("Kiln Programming Language V0.2.0 alpha");
     println!("Made by Azure-6-lgtm");
     println!("-----------------------------");
 

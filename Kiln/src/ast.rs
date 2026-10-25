@@ -41,6 +41,10 @@ pub enum Stmt {
         name: String,
         value: Expr,
     },
+    While {
+        Condition: Expr,
+        then_branch: Vec<Stmt>,
+    },
 }
 
 #[derive(Debug, Clone)]
@@ -61,8 +65,8 @@ pub enum Expr {
         args: Vec<Expr>,
     },
     Unary {
-		op: UnaryOp,
-		operand: Box<Expr>,
+        op: UnaryOp,
+        operand: Box<Expr>,
     },
 }
 
@@ -86,5 +90,5 @@ pub enum BinaryOp {
 
 #[derive(Debug, Clone, Copy)]
 pub enum UnaryOp {
-	Not,
+    Not,
 }

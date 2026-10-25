@@ -162,7 +162,7 @@ func some() {
 
 When a return type is declared, Kiln checks it when the function returns (E013). A function declared `-> void` cannot return a value (E002).
 
-Functions can call themselves. There are no loops yet, so recursion is how you repeat work:
+Functions can call themselves. Recursive functions also work but are not recommended as loops are here.:
 
 ```kiln
 func factorial(n: int) -> int {
@@ -176,11 +176,31 @@ func main() {
     print("5! =", factorial(5));
 }
 ```
+### Loops 
+`while` loop is currently available in 0.2.0 . `for` and `do while` loops are still W.I.P and are expected by 0.2.2
+
+``` Kiln
+func factorial(n: int) -> int {
+    mut result int = 1;
+    mut i = n;
+
+    while (i > 1) {
+        result = result * i;
+        i = i - 1; // increment operators are still W.I.P
+    }
+
+    return result;
+}
+
+func main() {
+    print("5! =", factorial(5));
+}
+```
 
 ### Printing
 
 `print` is built in. It takes any number of arguments, separates them with spaces, and ends with a newline.
-However, it will be removed once the standard library us developers
+However, it will be removed once the standard library is implemented 
 
 ```kiln
 print("Hello,", "Kiln");   // Hello, Kiln
@@ -188,9 +208,9 @@ print("Hello,", "Kiln");   // Hello, Kiln
 
 ### Reserved words
 
-`func` `const` `mut` `return` `when` `otherwise` `True` `False` `int` `float` `string` `bool` `void`
+`func` `const` `mut` `return` `when` `otherwise` `True` `False` `int` `float` `string` `bool` `void` `while`
 
-Reserved for future features (not implemented yet): `import` `struct` `enum` `switch` `case` `for` `in` `try`
+Reserved for future features (not implemented yet): `require` `struct` `enum` `switch` `case` `for` `in` `try` ` do`
 
 ## Errors
 
@@ -232,11 +252,12 @@ Lexer and parser errors include a line and column. Runtime errors do not yet.
 | E024 | Runtime | Not requires a boolean condition |
 | E025 | Runtime | And requires a boolean condition
 | E026 | Runtime | Or requires a boolean condition
+| E027 | Runtime | While requires a boolean condition
 
 ## Current limitations
 
-- No loops. Use recursion for now.
-- No `import`, `struct`, `enum`, `switch` or `try` yet (reserved keywords).
+- No `for` or `do while` loops. Use `while` and recursion for now`
+- No `require`, `struct`, `enum`, `switch` or `try` yet (reserved keywords).
 - No `%` or compound assignment such as `+=`.
 - Parameter types must be written but are not checked when a function is called. Mismatched operands still fail (E017).
 - Booleans cannot be compared with `==` or `!=`.
@@ -258,7 +279,8 @@ Kiln/
 
 ## Contributing
 
-Issues and pull requests are welcome.
+Issues and pull requests are welcome. <br>
+For more information, See [Contributing](contributing.md)
 
 ## License
 
